@@ -1,0 +1,59 @@
+-- Creating external table referring to gcs path
+CREATE OR REPLACE EXTERNAL TABLE `terraformtestproject0.dezoomcamp.fvh_table`
+OPTIONS (
+  format = 'CSV',
+  uris = ['gs://fhv_nyc_taxi/fhv_2019/fhv_tripdata_2019-*.csv.gz']
+);
+
+CREATE OR REPLACE TABLE `terraformtestproject0.dezoomcamp.fvh_table_nonpartitioned` AS
+SELECT * FROM `terraformtestproject0.dezoomcamp.fvh_table`;
+
+
+SELECT pickup_datetime
+FROM `terraformtestproject0.dezoomcamp.fvh_table`
+LIMIT 10;
+
+--- Question 1.
+select count(*)
+from `terraformtestproject0.dezoomcamp.fvh_table`;
+--- Answer 1: 43244696
+
+--- Question 2.1.
+select count(distinct affiliated_base_number)
+from `terraformtestproject0.dezoomcamp.fvh_table`;
+
+--- Question 2.2
+select count(distinct affiliated_base_number)
+from `terraformtestproject0.dezoomcamp.fvh_table_nonpartitioned`;
+-- Answer 2: This query will process 0 B when run. and This query will process 317.94 MB when run.
+
+--- Question 3.
+
+select count(*)
+from `terraformtestproject0.dezoomcamp.fvh_table`
+where PUlocationID is NULL and DOlocationID is NULL;
+
+-- Answer 3: 717748
+
+--- Question 4.
+-- Answer 4: Partition by pickup_datetime and Cluster by affiliated_base_number
+
+--- Question 5.
+CREATE OR REPLACE TABLE `terraformtestproject0.dezoomcamp.fvh_table_partitioned`
+PARTITION BY DATE(pickup_datetime)
+CLUSTER BY affiliated_base_number AS
+SELECT * FROM `terraformtestproject0.dezoomcamp.fvh_table`;
+
+SELECT DISTINCT affiliated_base_number
+FROM `terraformtestproject0.dezoomcamp.fvh_table_partitioned`
+WHERE pickup_datetime BETWEEN '2019-03-01' AND '2019-03-31 23:59:59';
+
+SELECT DISTINCT affiliated_base_number
+FROM `terraformtestproject0.dezoomcamp.fvh_table_nonpartitioned`
+WHERE pickup_datetime BETWEEN '2019-03-01' AND '2019-03-31 23:59:59';
+
+-- Answer 6: This query will process 647.87 MB when run. and This query will process 23.05 MB when run.
+
+
+--- Question 7.
+-- Answer 7: False
